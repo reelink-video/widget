@@ -135,7 +135,7 @@ export function endsWithLine(el: Element | null, width: number) {
     if (e.getBoundingClientRect().width < width * 0.8) return false;
     if (e.tagName === "HR") return true;
     const s = getComputedStyle(e);
-    const visible = s.borderBottomStyle !== "none" && parseFloat(s.borderBottomWidth) > 0 && !/transparent|rgba\(.*,\s*0\)$/.test(s.borderBottomColor);
+    const visible = s.borderBottomStyle !== "none" && parseFloat(s.borderBottomWidth) > 0 && !/^(transparent|rgba\(.*,\s*0\))$/.test(s.borderBottomColor);
     if (visible) return true;
   }
   return false;

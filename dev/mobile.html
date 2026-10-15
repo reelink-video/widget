@@ -4,5 +4,9 @@
 <body>
 <!-- náhled stránky v šířce telefonu: /mobile.html?u=/_real/levandule/ -->
 <iframe id="f"></iframe>
-<script>document.getElementById("f").src = new URLSearchParams(location.search).get("u") || "/nocni-krem/";</script>
+<script>
+// jen stránky z tohoto serveru
+const u = new URL(new URLSearchParams(location.search).get("u") || "/nocni-krem/", location.href);
+document.getElementById("f").src = u.origin === location.origin ? u.pathname + u.search : "/nocni-krem/";
+</script>
 </body></html>
