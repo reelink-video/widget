@@ -1,0 +1,16 @@
+{
+  "name": "reelink-widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node build.mjs --serve",
+    "build": "node build.mjs",
+    "check": "tsc --noEmit",
+    "publish": "node build.mjs && ../demo/node_modules/.bin/wrangler r2 object put reelink-cdn/widget.js --file dist/widget.js --content-type 'application/javascript; charset=utf-8' --cache-control 'public, max-age=300' --remote"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "typescript": "^5.6.0"
+  }
+}

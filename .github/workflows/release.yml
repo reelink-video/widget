@@ -1,0 +1,97 @@
+# Vydání verze: git tag v1.2.3 (stejné číslo jako v package.json) a push tagu.
+# Po kontrolách sestaví widget.js, podepíše ho (build provenance přes Sigstore), vydá na GitHubu
+# a nahraje na CDN jako neměnný widget@1.2.3.js i jako widget.js. Do versions.json připíše verzi
+# s hashem SHA-384, ze kterého čte stránka reelink.cz/bezpecnost.
+# Tajemství repozitáře: CLOUDFLARE_API_TOKEN (R2 zápis), CLOUDFLARE_ACCOUNT_ID.
+name: release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: read
+  security-events: write
+
+env:
+  CDN: https://cdn.reelink.cz
+  BUCKET: reelink-cdn
+
+jobs:
+  checks:
+    uses: ./.github/workflows/checks.yml
+
+  release:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Verze z tagu
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          [ "$v" = "$(jq -r .version package.json)" ] || { echo "tag $GITHUB_REF_NAME nesedí s package.json"; exit 1; }
+          echo "V=$v" >> "$GITHUB_ENV"
+
+      # jednou vydaná verze se už nikdy nemění: obchody s integrity="" by jinak přestaly fungovat
+      - name: Verze ještě neexistuje
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$CDN/widget@$V.js")
+          [ "$code" = "404" ] || { echo "widget@$V.js už na CDN je ($code)"; exit 1; }
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Hash pro integrity
+        run: echo "SRI=sha384-$(openssl dgst -sha384 -binary dist/widget.js | openssl base64 -A)" >> "$GITHUB_ENV"
+
+      - name: Podpis sestavení
+        id: attest
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/widget.js
+
+      - name: Vydání na GitHubu
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/widget.js --title "$GITHUB_REF_NAME" --notes "$(cat <<EOF
+          Kontroly: CodeQL (security-extended), Semgrep, bez runtime závislostí.
+
+          \`\`\`html
+          <script async src="$CDN/widget@$V.js" integrity="$SRI" crossorigin="anonymous" data-shop="VAS-KOD"></script>
+          \`\`\`
+
+          SHA-384: \`$SRI\`
+          Podpis: ${{ steps.attest.outputs.attestation-url }}
+          EOF
+          )"
+
+      - name: Na CDN
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          put() { npx --yes wrangler@4 r2 object put "$BUCKET/$1" --file "$2" --content-type "$3" --cache-control "$4" --remote; }
+          put "widget@$V.js" dist/widget.js "application/javascript; charset=utf-8" "public, max-age=31536000, immutable"
+          put "widget.js" dist/widget.js "application/javascript; charset=utf-8" "public, max-age=300"
+
+          # versions.json: nejnovější verze první
+          curl -sf "$CDN/versions.json" -o versions.json || echo "[]" > versions.json
+          jq --arg v "$V" --arg sri "$SRI" --arg commit "$GITHUB_SHA" \
+             --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+             --arg url "$CDN/widget@$V.js" \
+             --arg attestation "${{ steps.attest.outputs.attestation-url }}" \
+             --arg release "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME" \
+             '[{version: $v, date: $date, commit: $commit, sri: $sri, url: $url, attestation: $attestation, release: $release,
+                checks: ["codeql", "semgrep", "no-deps"]}] + map(select(.version != $v))' versions.json > versions.new.json
+          put "versions.json" versions.new.json "application/json; charset=utf-8" "public, max-age=300"

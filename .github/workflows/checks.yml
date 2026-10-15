@@ -1,0 +1,53 @@
+# Bezpečnostní kontroly widgetu. Pouští je ci.yml u každé změny a release.yml před vydáním verze;
+# když cokoli najdou, verze nevyjde.
+name: checks
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # do prohlížeče jde jen náš kód: žádné runtime závislosti
+      - name: Bez závislostí
+        run: |
+          n=$(jq '.dependencies // {} | length' package.json)
+          [ "$n" = "0" ] || { echo "package.json má $n runtime závislostí"; exit 1; }
+
+      - name: Typy
+        run: npm run check
+
+      - name: Sestavení
+        run: npm run build
+
+      - name: Semgrep
+        run: pipx run semgrep scan --config p/javascript --config p/typescript --error --metrics=off src
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v3
+        with:
+          output: codeql-results
+
+      # nálezy se ukážou v záložce Security, ale vydání zastaví i tady
+      - name: CodeQL bez nálezů
+        run: |
+          n=$(jq '[.runs[].results[]] | length' codeql-results/*.sarif)
+          [ "$n" = "0" ] || { echo "CodeQL našel $n problémů"; exit 1; }
