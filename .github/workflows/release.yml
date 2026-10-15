@@ -43,9 +43,10 @@ jobs:
           echo "V=$v" >> "$GITHUB_ENV"
 
       # a released version never changes: shops pinned with integrity="" would break otherwise
+      # (query string bypasses the edge cache, otherwise Cloudflare caches this 404 for the real URL)
       - name: Version not published yet
         run: |
-          code=$(curl -s -o /dev/null -w '%{http_code}' "$CDN/widget@$V.js")
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$CDN/widget@$V.js?check=$GITHUB_RUN_ID")
           [ "$code" = "404" ] || { echo "widget@$V.js already exists on the CDN ($code)"; exit 1; }
 
       - run: npm ci
@@ -86,7 +87,8 @@ jobs:
           put "widget.js" dist/widget.js "application/javascript; charset=utf-8" "public, max-age=300"
 
           # versions.json: newest version first
-          curl -sf "$CDN/versions.json" -o versions.json || echo "[]" > versions.json
+          # bypass the edge cache: a stale copy would drop the previous version
+          curl -sf "$CDN/versions.json?fresh=$GITHUB_RUN_ID" -o versions.json || echo "[]" > versions.json
           jq --arg v "$V" --arg sri "$SRI" --arg commit "$GITHUB_SHA" \
              --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
              --arg url "$CDN/widget@$V.js" \
