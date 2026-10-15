@@ -72,7 +72,45 @@ npm run check
 npm run build   # dist/widget.js
 ```
 
-Release: bump `version` in `package.json`, then `git tag v1.2.3 && git push --tags`.
+## Releasing a new version
+
+Releases are published only by CI (`.github/workflows/release.yml`). There is no manual upload, so every file on
+the CDN is checked and signed.
+
+1. Make sure `main` is green in Actions and your working tree is clean.
+2. Bump the version, commit and tag in one step:
+
+   ```sh
+   npm version patch   # bug fix: 1.0.0 → 1.0.1
+   npm version minor   # new feature, compatible: 1.0.1 → 1.1.0
+   npm version major   # breaking change for shops: 1.1.0 → 2.0.0
+   ```
+
+3. Push the commit and the tag:
+
+   ```sh
+   git push --follow-tags
+   ```
+
+4. Watch the run: `gh run watch` (or the Actions tab). It runs the checks, builds, signs, creates the GitHub
+   release and uploads to the CDN:
+   - `widget@X.Y.Z.js`, immutable, for shops pinned with `integrity`,
+   - `widget.js`, the auto-updating file most shops use (cached for 5 minutes),
+   - `versions.json`, which feeds [reelink.cz/bezpecnost](https://reelink.cz/bezpecnost#verze).
+
+5. Verify the published file:
+
+   ```sh
+   curl -sO https://cdn.reelink.cz/widget@X.Y.Z.js
+   gh attestation verify widget@X.Y.Z.js --repo reelink-video/widget
+   ```
+
+**If the run fails** before the "Upload to CDN" step, nothing reached shops. Fix the problem on `main`, delete the tag
+(`git tag -d vX.Y.Z && git push origin :refs/tags/vX.Y.Z`, plus `gh release delete vX.Y.Z` if the release was
+created) and tag again. Once `widget@X.Y.Z.js` is on the CDN, that version number is used up: release the fix as the
+next patch version.
+
+Secrets used by the workflow: `CLOUDFLARE_API_TOKEN` (Workers R2 Storage: Edit) and `CLOUDFLARE_ACCOUNT_ID`.
 
 ## Reporting a security issue
 
