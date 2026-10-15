@@ -1,17 +1,17 @@
-// Data, která admin publikuje pro každý produkt jako statický JSON: <base>/s/<shop>/p/<klíč>.json
-// Klíč je hash cesty kanonické URL produktu (viz productKey), takže ho spočítá i backend z URL ve feedu.
+// Data the admin publishes for each product as static JSON: <base>/s/<shop>/p/<key>.json
+// The key is a hash of the product's canonical URL path (see productKey), so the backend can compute it from the feed URL too.
 
 export type Clip = {
   src: string;
   poster: string;
-  // vodorovný výřez videa v náhledu, např. "40%"
+  // horizontal crop of the video in the preview, e.g. "40%"
   pos?: string;
   label?: string;
-  // délka v sekundách; když chybí, zjistí se z metadat videa
+  // duration in seconds; when missing, read from the video metadata
   duration?: number;
 };
 
-// kolekce = téma u produktu (jako výběr na Instagramu). Samostatné video je kolekce s jedním klipem.
+// collection = a topic on the product (like an Instagram highlight). A standalone video is a single-clip collection.
 export type Collection = {
   id: string;
   title: string;
@@ -23,20 +23,20 @@ export type Format = "tiles" | "circles" | "single";
 export type ProductData = {
   v: 1;
   format: Format;
-  // nadpis bloku nad videi; prázdný řetězec = bez nadpisu
+  // block heading above the videos; empty string = no heading
   title?: string;
-  // odznak „videa přes reelink“ v přehrávači (Start ano, Pro ne)
+  // "videa přes reelink" badge in the player (Start yes, Pro no)
   badge?: boolean;
   collections: Collection[];
 };
 
-// co o produktu víme ze stránky: v přehrávači tak cena vždy sedí s webem
+// what we know about the product from the page: so the price in the player always matches the site
 export type PageProduct = {
   id: string | null;
   name: string;
   price: string;
   img: string;
-  // má varianty k výběru (velikost, barva): tlačítko v přehrávači vede k nim, ne rovnou do košíku
+  // has variants to choose (size, color): the player button leads to them, not straight to the cart
   needsVariant: boolean;
 };
 
@@ -57,11 +57,11 @@ export interface PlatformAdapter {
   detect(): boolean;
   isProductPage(): boolean;
   getProduct(): PageProduct | null;
-  // kam widget vložit: vrátí prvek a jestli jít před něj, nebo za něj; wide = přes celou šířku stránky.
-  // host je už vykreslený widget (podle jeho výšky se dá rozhodnout, jestli se vejde do sloupce)
+  // where to insert the widget: returns the element and whether to go before or after it; wide = full page width.
+  // host is the already rendered widget (its height tells whether it fits in the column)
   findAnchor(host?: HTMLElement): { el: Element; where: "before" | "after"; wide?: boolean } | null;
-  // prvek, jehož vzhled widget převezme (barvy a zaoblení tlačítka)
+  // element whose look the widget adopts (button colors and border radius)
   findCta(): HTMLElement | null;
-  // varianta A: zavřít video a ukázat nativní výběr varianty; varianta B: kliknout na nativní tlačítko
+  // option A: close the video and show the native variant picker; option B: click the native button
   addToCart(): void;
 }

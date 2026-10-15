@@ -1,4 +1,4 @@
-// panel pro vývoj: přepínač formátů, poslední událost a falešný Shoptet košík
+// dev panel: format switcher, last event and a fake Shoptet cart
 (function () {
   const bar = document.querySelector(".dev-bar");
   const out = bar.querySelector("output");

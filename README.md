@@ -1,68 +1,69 @@
 # Reelink widget
 
-Widget, který na produktových stránkách e-shopu ukazuje krátká vertikální videa. Vkládá se jedním řádkem kódu:
+A widget that shows short vertical videos on e-shop product pages. It is added with a single line of code:
 
 ```html
-<script async src="https://cdn.reelink.cz/widget.js" data-shop="VAS-KOD"></script>
+<script async src="https://cdn.reelink.cz/widget.js" data-shop="YOUR-ID"></script>
 ```
 
-Kód je veřejný, abyste si mohli sami ověřit, co na vašem webu běží. Víc na [reelink.cz/bezpecnost](https://reelink.cz/bezpecnost).
+The source is public so that anyone can check what runs on their site. More at
+[reelink.cz/bezpecnost](https://reelink.cz/bezpecnost).
 
-## Co widget dělá
+## What the widget does
 
-- čte ze stránky název, cenu, fotku a zvolenou variantu produktu,
-- ukáže pod cenou videa a po kliknutí zmáčkne vaše tlačítko „Do košíku“,
-- posílá souhrnné události (zobrazení, přehrání, klik) bez ID návštěvníka,
-- neukládá cookies ani nic jiného do prohlížeče, nečte formuláře ani údaje zákazníků.
+- reads the product name, price, photo and selected variant from the page,
+- shows videos under the price and, on click, presses the shop's own "Add to cart" button,
+- sends aggregate events (impression, play, click) without any visitor ID,
+- stores no cookies or anything else in the browser, and never reads forms or customer data.
 
-Nemá žádné runtime závislosti, do prohlížeče jde jen kód z `src/`.
+It has no runtime dependencies: only the code in `src/` is shipped to the browser.
 
-## Kontroly každé verze
+## Checks for every version
 
-Než verze vyjde, musí projít (`.github/workflows/checks.yml`):
+Before a version is released it has to pass (`.github/workflows/checks.yml`):
 
-- **CodeQL** se sadou `security-extended`,
-- **Semgrep** s pravidly pro JavaScript a TypeScript,
-- kontrolou, že `package.json` nemá runtime závislosti,
-- kontrolou typů.
+- **CodeQL** with the `security-extended` suite,
+- **Semgrep** with the JavaScript and TypeScript rule sets,
+- a check that `package.json` has no runtime dependencies,
+- type checking.
 
-Vydanou verzi podepíše GitHub Actions (build provenance přes Sigstore). Seznam verzí s hashi je na
-[cdn.reelink.cz/versions.json](https://cdn.reelink.cz/versions.json).
+Each released file is signed by GitHub Actions (build provenance via Sigstore). The list of versions with their
+hashes is at [cdn.reelink.cz/versions.json](https://cdn.reelink.cz/versions.json).
 
-## Jak ověřit soubor
+## Verifying a file
 
-Podpis: soubor pochází z tohoto repozitáře a od sestavení se nezměnil.
+The signature proves the file was built from this repository and has not changed since:
 
 ```sh
 curl -sO https://cdn.reelink.cz/widget@1.0.0.js
 gh attestation verify widget@1.0.0.js --repo reelink-video/widget
 ```
 
-Hash, který porovnáte s `versions.json` nebo s vydáním na GitHubu:
+The hash, to compare with `versions.json` or the GitHub release:
 
 ```sh
 echo "sha384-$(openssl dgst -sha384 -binary widget@1.0.0.js | openssl base64 -A)"
 ```
 
-Sestavení si můžete zopakovat sami a výsledek by měl mít stejný hash:
+The build is reproducible, so rebuilding a tag should give the same hash:
 
 ```sh
 git checkout v1.0.0 && npm ci && npm run build
 ```
 
-## Pevná verze s integrity
+## Pinned version with integrity
 
-Kdo nechce automatické aktualizace, vloží konkrétní verzi s hashem. Prohlížeč pak soubor nespustí, pokud by se
-změnil byť o jeden znak:
+Shops that don't want automatic updates can embed a specific version with its hash. The browser refuses to run the
+file if even a single byte changes:
 
 ```html
 <script async src="https://cdn.reelink.cz/widget@1.0.0.js"
-  integrity="sha384-…" crossorigin="anonymous" data-shop="VAS-KOD"></script>
+  integrity="sha384-…" crossorigin="anonymous" data-shop="YOUR-ID"></script>
 ```
 
-Přesný řádek s hashem je u každého vydání.
+The exact line with the hash is in every release.
 
-## Vývoj
+## Development
 
 ```sh
 npm ci
@@ -71,8 +72,8 @@ npm run check
 npm run build   # dist/widget.js
 ```
 
-Vydání: zvyšte `version` v `package.json`, pak `git tag v1.2.3 && git push --tags`.
+Release: bump `version` in `package.json`, then `git tag v1.2.3 && git push --tags`.
 
-## Bezpečnostní problém
+## Reporting a security issue
 
-Viz [SECURITY.md](SECURITY.md).
+See [SECURITY.md](SECURITY.md).

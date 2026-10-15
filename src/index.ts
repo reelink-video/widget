@@ -1,12 +1,12 @@
-// Reelink widget: videa na kartě produktu.
-// <script async src="https://<cdn>/widget.js" data-shop="ID_OBCHODU"></script>
+// Reelink widget: videos on the product page.
+// <script async src="https://<cdn>/widget.js" data-shop="SHOP_ID"></script>
 //
-// Atributy skriptu:
-//   data-shop    ID obchodu (povinné)
-//   data-base    odkud brát data, výchozí je adresa, ze které se načetl skript
-//   data-src     přímá adresa JSONu s videi (ukázka přes proxy, ladění)
-//   data-format  přebije formát z adminu: tiles | circles | single
-//   data-events  adresa pro události analytiky (zatím žádná)
+// Script attributes:
+//   data-shop    shop ID (required)
+//   data-base    where to fetch data from, defaults to the URL the script was loaded from
+//   data-src     direct URL of the videos JSON (proxy demo, debugging)
+//   data-format  overrides the format from admin: tiles | circles | single
+//   data-events  URL for analytics events (none yet)
 
 import type { Format, PlatformAdapter, ProductData } from "./types";
 import { shoptet } from "./adapters/shoptet";
@@ -49,11 +49,11 @@ async function boot() {
 
   const url = script.dataset.src ?? `${base}/s/${encodeURIComponent(shop)}/p/${key}.json`;
   const res = await fetch(url, { credentials: "omit" });
-  if (!res.ok) return; // produkt bez videí: widget se vůbec neukáže
+  if (!res.ok) return; // product without videos: the widget doesn't show at all
   const data: unknown = await res.json();
   if (!valid(data)) return;
   data.collections = data.collections.filter((c) => c.clips.length > 0);
-  // cesty k videím jsou relativní k JSONu, ne ke stránce obchodu (ta může mít vlastní <base>)
+  // video paths are relative to the JSON, not to the shop page (it may have its own <base>)
   const abs = (u: string) => new URL(u, new URL(url, location.href)).href;
   for (const c of data.collections) for (const v of c.clips) [v.src, v.poster] = [abs(v.src), abs(v.poster)];
   const forced = script.dataset.format as Format | undefined;
@@ -63,7 +63,7 @@ async function boot() {
   const anchor = adapter.findAnchor();
   const product = adapter.getProduct();
   if (!anchor || !product) {
-    // šablona obchodu se změnila: v adminu to ukážeme jako poruchu instalace
+    // the shop template changed: admin shows it as a broken installation
     track("anchor_missing", { adapter: adapter.name });
     return;
   }
@@ -79,22 +79,22 @@ async function boot() {
     view.pause(true);
     openPlayer({
       data,
-      product: adapter.getProduct() ?? product, // cena se mohla změnit výběrem varianty
+      product: adapter.getProduct() ?? product, // the price may have changed by picking a variant
       start,
       themeFrom: host,
       onCta: () => {
         const p = adapter.getProduct() ?? product;
         adapter.addToCart();
-        // u variant zákazník teprve vybírá velikost, do košíku jsme nic nepřidali
+        // with variants the customer is still choosing a size, we added nothing to the cart
         if (!p.needsVariant) track("add_to_cart", { adapter: adapter.name });
       },
       onClose: () => view.pause(false),
     });
   });
 
-  // teprve teď má widget výšku: adaptér rozhodne, jestli zůstane ve sloupci, nebo půjde přes celou šířku
+  // only now does the widget have a height: the adapter decides whether it stays in the column or goes full width
   place(host, adapter);
-  // přesunutý prvek prohlížeč zastaví i s videi v náhledech, rozjedeme je znovu
+  // the browser stops a moved element along with its preview videos, restart them
   settle(host, adapter, () => {
     view.pause(true);
     view.pause(false);
@@ -104,7 +104,7 @@ async function boot() {
     adapter: adapter.name,
     key,
     setFormat: (f) => FORMATS.includes(f) && view.setFormat(f),
-    // pro ladění a testovací přehled: co widget o stránce zjistil a kam se postavil
+    // for debugging and the test overview: what the widget learned about the page and where it placed itself
     info: () => ({
       product: adapter.getProduct(),
       spot: host.hasAttribute("data-wide") ? "wide" : "column",
@@ -114,7 +114,7 @@ async function boot() {
   };
 }
 
-// vloží widget ke kotvě; vrátí false, když kotva na stránce není
+// inserts the widget at the anchor; returns false when the anchor isn't on the page
 function place(host: HTMLElement, adapter: PlatformAdapter) {
   const anchor = adapter.findAnchor(host);
   if (!anchor) return false;
@@ -122,7 +122,7 @@ function place(host: HTMLElement, adapter: PlatformAdapter) {
   const at = anchor.el;
   const pos = gridSafe(at, anchor.where);
   if (!isAt(host, pos)) put(host, pos);
-  // šablony skládají sloupec přes flex a CSS order: bez stejného order by widget vyskočil nahoru
+  // templates lay out the column with flex and CSS order: without the same order the widget would jump to the top
   const order = pos.mode === "after" || pos.mode === "before" ? getComputedStyle(at).order : "";
   if (host.style.order !== order) host.style.order = order;
   const lined = endsWithLine(anchor.where === "after" ? at : at.previousElementSibling, host.getBoundingClientRect().width);
@@ -132,9 +132,9 @@ function place(host: HTMLElement, adapter: PlatformAdapter) {
 
 type Pos = { el: Element; mode: "after" | "before" | "append" | "prepend" };
 
-// Sloupec složený jako grid (oblasti, nebo položky s pevným řádkem): nový prvek by prohlížeč posadil
-// do první volné buňky (vyprodejpovleceni.cz). Pak jdeme dovnitř buňky:
-// na konec kotvy, a když kotva skládá obsah do řádku, na začátek následujícího bloku.
+// Column laid out as a grid (areas, or items with a fixed row): the browser would put a new element
+// into the first free cell (vyprodejpovleceni.cz). So we go inside the cell:
+// to the end of the anchor, and when the anchor lays out its content in a row, to the start of the next block.
 function gridSafe(at: Element, where: "before" | "after"): Pos {
   const parent = at.parentElement;
   const ps = parent && getComputedStyle(parent);
@@ -160,12 +160,12 @@ function put(host: HTMLElement, { el, mode }: Pos) {
   else el.prepend(host);
 }
 
-// Skripty šablony a doplňků často přeskládají blok s košíkem až po načtení stránky a galerie
-// dostane výšku až s fotkami. Prvních 10 s proto hlídáme DOM i velikost stránky a widget přesuneme,
-// kam patří; změnu šířky okna (otočení telefonu) hlídáme pořád.
+// Template and add-on scripts often rearrange the cart block only after page load, and the gallery
+// gets its height only with the photos. So for the first 10 s we watch the DOM and page size and move the widget
+// where it belongs; window width changes (phone rotation) we watch always.
 function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void) {
   let timer = 0;
-  // ne requestAnimationFrame: ve vkladce na pozadí (produkt otevřený do nové karty) neběží
+  // not requestAnimationFrame: it doesn't run in a background tab (product opened in a new tab)
   const schedule = (delay = 30) => {
     clearTimeout(timer);
     timer = window.setTimeout(() => {
@@ -198,7 +198,7 @@ function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void)
 
 function start() {
   boot().catch(() => {
-    // cokoli se pokazí, stránka obchodu musí fungovat dál
+    // whatever breaks, the shop page must keep working
   });
 }
 

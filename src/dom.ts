@@ -1,7 +1,7 @@
 type Attrs = Record<string, string | number | boolean | null | undefined | EventListener>;
 type Child = Node | string | null | undefined | false;
 
-// malý pomocník místo Reactu: h("button", { class: "x", onclick: fn }, "text")
+// tiny helper instead of React: h("button", { class: "x", onclick: fn }, "text")
 export function h<K extends keyof HTMLElementTagNameMap>(tag: K, attrs: Attrs = {}, ...children: Child[]): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) {

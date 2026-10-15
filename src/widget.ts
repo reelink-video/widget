@@ -3,7 +3,7 @@ import { h, icon, prefersReducedMotion } from "./dom";
 import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "./util";
 import { track } from "./events";
 
-// délka: u samostatného videa ukazujeme ji místo „1 video“
+// duration: for a standalone video we show it instead of "1 video"
 function durationSlot(c: Collection, video?: HTMLVideoElement) {
   const el = h("small");
   const known = c.clips.reduce((s, v) => s + (v.duration ?? NaN), 0);
@@ -32,7 +32,7 @@ function tile(c: Collection, open: () => void) {
   );
 }
 
-// kroužek rozdělený na tolik dílků, kolik má kolekce videí; samostatné video má plný
+// ring split into as many segments as the collection has videos; a standalone video has a full one
 function ringSegments(n: number) {
   if (n < 2) return "var(--rl-ink)";
   const step = 360 / n;
@@ -83,7 +83,7 @@ function feature(cols: Collection[], open: (i: number) => void) {
   );
 }
 
-// náhledy hrají samy, když jsou vidět (a návštěvník nechce omezit pohyb)
+// previews autoplay when visible (and the visitor doesn't prefer reduced motion)
 function autoplay(root: ParentNode) {
   const vids = Array.from(root.querySelectorAll<HTMLVideoElement>("video"));
   if (prefersReducedMotion() || !("IntersectionObserver" in window)) return () => {};
@@ -138,7 +138,7 @@ export function renderWidget(shadow: ShadowRoot, data: ProductData, onOpen: (col
 
   draw();
 
-  // zobrazení widgetu (jednou, když je aspoň z poloviny vidět)
+  // widget impression (once, when at least half visible)
   if ("IntersectionObserver" in window) {
     const io = new IntersectionObserver(
       (es) => {

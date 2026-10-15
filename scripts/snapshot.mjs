@@ -1,7 +1,7 @@
-// Stáhne kartu produktu z veřejných e-shopů a připraví lokální kopii s widgetem pro testování:
+// Downloads a product page from public e-shops and prepares a local copy with the widget for testing:
 //   node scripts/snapshot.mjs olivie.cz brainmarket.cz ...
-// Kopie jdou do dev/_real/<doména>/ (v .gitignore), přehled všech na http://localhost:4400/_real/
-// Jen pro vývoj adaptéru, nikam se nepublikuje.
+// Copies go to dev/_real/<domain>/ (in .gitignore), overview of all at http://localhost:4400/_real/
+// For adapter development only, never published.
 
 import { mkdir, writeFile, readdir } from "node:fs/promises";
 
@@ -15,7 +15,7 @@ async function get(url) {
   return { html: await res.text(), url: res.url };
 }
 
-// první produkt ze seznamu na úvodní stránce (Shoptet: <a href="..." class="image">)
+// first product from the homepage listing (Shoptet: <a href="..." class="image">)
 function firstProduct(html, base) {
   const links = [...html.matchAll(/<a href="([^"]+)" class="image"/g)].map((m) => m[1]);
   const href = links.find((h) => !h.startsWith("#"));
@@ -56,7 +56,7 @@ for (const d of domains) {
   }
 }
 
-// seznam pro přehledovou stránku
+// list for the overview page
 const all = [];
 for (const name of await readdir(OUT, { withFileTypes: true })) {
   if (!name.isDirectory()) continue;
@@ -64,7 +64,7 @@ for (const name of await readdir(OUT, { withFileTypes: true })) {
     const { readFile } = await import("node:fs/promises");
     all.push(JSON.parse(await readFile(new URL(`${name.name}/meta.json`, OUT), "utf8")));
   } catch {
-    // starší ručně připravené kopie bez meta.json
+    // older hand-made copies without meta.json
   }
 }
 await writeFile(new URL("shops.json", OUT), JSON.stringify(all, null, 2));

@@ -1,5 +1,5 @@
-// Styly žijí v Shadow DOM, takže CSS obchodu je nerozbije a my nerozbijeme jeho.
-// Jen px, žádné rem: obchody mívají různé písmo na <html> (třeba 62,5 %).
+// Styles live in Shadow DOM, so the shop's CSS can't break them and we can't break its.
+// Only px, no rem: shops often set a different font size on <html> (e.g. 62.5%).
 
 const EASE = "cubic-bezier(.2,.8,.2,1)";
 
@@ -8,12 +8,12 @@ export const widgetCss = `
 * { box-sizing: border-box; }
 button { font: inherit; }
 .rl { position: relative; display: grid; gap: 12px; padding: 16px 0 4px; border-top: 1px solid var(--rl-line); }
-/* přes celou šířku stránky (ve sloupci s cenou by nebyl místo): větší dlaždice */
+/* full page width (no room in the price column): larger tiles */
 :host([data-wide]) { margin: 24px 0; }
 :host([data-wide]) .rl-row { gap: 12px; }
 :host([data-wide]) .rl-tile { flex: 0 0 auto; width: clamp(120px, 16%, 180px); max-width: none; }
 :host([data-wide]) .rl-title { font-size: 22px; }
-/* nad widgetem už je čára obchodu: druhou nekreslíme */
+/* the shop already draws a line above the widget: don't draw a second one */
 :host([data-noline]) .rl { border-top: 0; padding-top: 4px; }
 .rl-head { display: flex; align-items: baseline; gap: 6px; }
 .rl-title { font-family: var(--rl-head-font); font-size: 18px; font-weight: 600; letter-spacing: -.01em; margin: 0; }

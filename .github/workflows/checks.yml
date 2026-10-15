@@ -1,5 +1,5 @@
-# Bezpečnostní kontroly widgetu. Pouští je ci.yml u každé změny a release.yml před vydáním verze;
-# když cokoli najdou, verze nevyjde.
+# Security checks for the widget. Run by ci.yml on every change and by release.yml before a release;
+# any finding blocks the release.
 name: checks
 
 on:
@@ -22,22 +22,22 @@ jobs:
 
       - run: npm ci
 
-      # do prohlížeče jde jen náš kód: žádné runtime závislosti
-      - name: Bez závislostí
+      # only our own code ships to the browser: no runtime dependencies
+      - name: No runtime dependencies
         run: |
           n=$(jq '.dependencies // {} | length' package.json)
-          [ "$n" = "0" ] || { echo "package.json má $n runtime závislostí"; exit 1; }
+          [ "$n" = "0" ] || { echo "package.json has $n runtime dependencies"; exit 1; }
 
-      - name: Typy
+      - name: Types
         run: npm run check
 
-      - name: Sestavení
+      - name: Build
         run: npm run build
 
       - name: Semgrep
         run: pipx run semgrep scan --config p/javascript --config p/typescript --error --metrics=off src
 
-      # do e-shopů jde jen src/, dev server a skripty v dev/ a scripts/ běží jen u nás
+      # only src/ ships to shops; the dev server and dev/, scripts/ run locally only
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
@@ -49,8 +49,8 @@ jobs:
         with:
           output: codeql-results
 
-      # nálezy se ukážou v záložce Security, ale vydání zastaví i tady
-      - name: CodeQL bez nálezů
+      # findings show up in the Security tab; fail here too so they block the release
+      - name: No CodeQL findings
         run: |
           n=$(jq '[.runs[].results[]] | length' codeql-results/*.sarif)
-          [ "$n" = "0" ] || { echo "CodeQL našel $n problémů"; exit 1; }
+          [ "$n" = "0" ] || { echo "CodeQL found $n issues"; exit 1; }

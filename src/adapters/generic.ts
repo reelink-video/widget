@@ -1,8 +1,8 @@
 import type { PageProduct, PlatformAdapter } from "../types";
 import { text } from "../dom";
 
-// Jakýkoli web: widget se vloží do <div data-reelink></div>, které si obchod sám umístí.
-// Údaje o produktu bere ze schema.org (JSON-LD), tlačítko v přehrávači jen posune stránku k nákupu.
+// Any site: the widget goes into a <div data-reelink></div> that the shop places itself.
+// Product data comes from schema.org (JSON-LD), the player button just scrolls the page to the purchase area.
 
 type LdProduct = { "@type"?: string | string[]; name?: string; image?: string | string[]; offers?: unknown; sku?: string };
 
@@ -14,7 +14,7 @@ function ldProduct(): LdProduct | null {
       const p = items.find((x) => [x?.["@type"]].flat().includes("Product"));
       if (p) return p;
     } catch {
-      // poškozený JSON-LD přeskočíme
+      // skip broken JSON-LD
     }
   }
   return null;

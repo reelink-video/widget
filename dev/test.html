@@ -30,8 +30,8 @@
 <header><h1>Widget na e-shopech</h1><small>kontroluji… (asi 10 s na tři obchody)</small></header>
 <main id="list">načítám…</main>
 <script>
-// Každou kopii otevře ve skrytém iframu na šířce desktopu (1440) a telefonu (390), počká, až se widget usadí,
-// a přečte window.reelink.info(). Výsledky jdou do tabulky nahoře, pod ní náhledy na kliknutí.
+// Opens each copy in a hidden iframe at desktop (1440) and phone (390) width, waits for the widget to settle,
+// and reads window.reelink.info(). Results go to the table at the top, clickable previews below it.
 const tag = (text, cls = "") => `<span class="tag ${cls}">${text}</span>`;
 const WAIT = 8000;
 
@@ -80,7 +80,7 @@ async function main() {
     body.append(tr);
     return tr;
   });
-  // po třech obchodech naráz, ať prohlížeč nezamrzne
+  // three shops at a time so the browser doesn't freeze
   for (let k = 0; k < shops.length; k += 3) {
     await Promise.all(shops.slice(k, k + 3).map(async (s, j) => {
       const tr = rows[k + j];

@@ -1,5 +1,5 @@
-// Události analytiky. Bez souhlasu jen agregáty: neposíláme žádné ID návštěvníka ani cookies.
-// Endpoint zatím není; každá událost jde i jako window event „reelink:event“ (ladění, ukázka na webu).
+// Analytics events. Without consent only aggregates: we send no visitor ID or cookies.
+// No endpoint yet; every event also goes out as a window event "reelink:event" (debugging, demo on the site).
 
 export type EventName =
   | "impression"
@@ -23,6 +23,6 @@ export function track(name: EventName, data: Record<string, string | number> = {
     window.dispatchEvent(new CustomEvent("reelink:event", { detail }));
     if (ctx.endpoint && navigator.sendBeacon) navigator.sendBeacon(ctx.endpoint, JSON.stringify(detail));
   } catch {
-    // analytika nesmí nikdy rozbít stránku obchodu
+    // analytics must never break the shop page
   }
 }

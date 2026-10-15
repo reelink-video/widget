@@ -6,12 +6,12 @@ export const fmtTime = (sec: number) => Math.floor(sec / 60) + ":" + String(Math
 
 export const isSingle = (c: Collection) => c.clips.length === 1;
 
-// název dlaždice: u kolekce její název, u samostatného videa název videa (jinak kolekce)
+// tile title: collection name for a collection, video title for a standalone video (else the collection's)
 export const clipTitle = (c: Collection, v: Clip = c.clips[0]) => (isSingle(c) ? v.label || c.title : c.title);
 
 export const objPos = (v: Clip) => `${v.pos ?? "50%"} 50%`;
 
-// klíč produktu = FNV-1a hash cesty kanonické URL; stejně ho spočítá backend z URL ve feedu
+// product key = FNV-1a hash of the canonical URL path; the backend computes it the same way from the feed URL
 export function pathOf(url: string) {
   let p: string;
   try {
@@ -22,7 +22,7 @@ export function pathOf(url: string) {
   try {
     p = decodeURIComponent(p);
   } catch {
-    // necháme zakódované
+    // leave it encoded
   }
   p = p.toLowerCase().replace(/\/+$/, "");
   return p || "/";
@@ -42,7 +42,7 @@ export function productKey() {
   return fnv1a(pathOf(canonical || location.href));
 }
 
-// první neprůhledné pozadí od prvku nahoru
+// first opaque background going up from the element
 function backgroundOf(el: Element | null): string {
   for (let e = el; e; e = e.parentElement) {
     const bg = getComputedStyle(e).backgroundColor;
@@ -51,7 +51,7 @@ function backgroundOf(el: Element | null): string {
   return "#ffffff";
 }
 
-// widget přebírá písmo a barvy obchodu, akcent podle jeho tlačítka do košíku
+// the widget adopts the shop's font and colors, accent from its add-to-cart button
 export function readTheme(near: Element, cta: HTMLElement | null): Theme {
   const base = getComputedStyle(near.parentElement ?? near);
   const head = document.querySelector("h1");
@@ -84,9 +84,9 @@ export function applyTheme(host: HTMLElement, t: Theme) {
   s.setProperty("--rl-radius", t.radius);
 }
 
-// Šablony a doplňky obchodů rády přeskládají blok s košíkem do řádku (vedle sebe).
-// Widget potřebuje celou šířku, takže od kotvy jdeme nahoru, dokud má prvek vedle sebe souseda.
-// Podle skutečné polohy, ne podle CSS: bootstrapový .row je flex, ale sloupce v něm bývají pod sebou.
+// Shop templates and add-ons like to rearrange the cart block into a row (side by side).
+// The widget needs full width, so we go up from the anchor while the element has a sibling beside it.
+// By actual position, not CSS: bootstrap's .row is flex, but its columns are often stacked.
 const visibleRect = (e: Element) => {
   const r = e.getBoundingClientRect();
   return r.width && r.height ? r : null;
@@ -109,7 +109,7 @@ function hasNeighbourInRow(el: Element) {
   return false;
 }
 
-// skládá prvek své děti vedle sebe (např. množství a tlačítko do košíku)?
+// does the element lay out its children side by side (e.g. quantity and add-to-cart button)?
 export function hasRowLayout(el: Element) {
   const kids = Array.from(el.children).filter((c) => !c.matches("[data-reelink-widget]"));
   return kids.some((c) => hasNeighbourInRow(c));
@@ -121,9 +121,9 @@ export function blockAnchor(el: Element): Element {
   return cur;
 }
 
-// Končí prvek čarou (border-bottom jeho nebo posledního potomka, případně <hr>)?
-// Pak widget svou horní čáru nekreslí, jinak by pod sebou byly dvě.
-// Za čáru bereme jen něco přes skoro celou šířku widgetu, rámeček tlačítka nebo pole se nepočítá.
+// Does the element end with a line (its own or its last descendant's border-bottom, or an <hr>)?
+// Then the widget doesn't draw its top line, otherwise there would be two stacked.
+// Only something spanning almost the full widget width counts as a line; a button or input border doesn't.
 export function endsWithLine(el: Element | null, width: number) {
   const lastChild = (e: Element) => {
     let c = e.lastElementChild;

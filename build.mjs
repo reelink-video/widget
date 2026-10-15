@@ -26,11 +26,11 @@ const TYPES = {
   ".svg": "image/svg+xml",
 };
 
-// statický server pro dev/: esbuild serve neumí Range, bez něj prohlížeč videa nepřehraje
+// static server for dev/: esbuild serve doesn't support Range, without it the browser won't play videos
 function staticServer(root, port) {
   createServer((req, res) => {
-    // kopie obchodů vždy přes 127.0.0.1: skripty některých obchodů se na „localhost“ přepnou
-    // do vývojového režimu a načítají CSS z počítače svého vývojáře (brainmarket.cz)
+    // shop copies always via 127.0.0.1: some shops' scripts switch on "localhost"
+    // into dev mode and load CSS from their developer's machine (brainmarket.cz)
     if (/^localhost(:|$)/.test(req.headers.host ?? "") && /^\/($|\?|index\.html|_real\/|test\.html|mobile\.html)/.test(req.url)) {
       res.writeHead(302, { Location: `http://127.0.0.1:${port}${req.url}` }).end();
       return;
@@ -49,7 +49,7 @@ function staticServer(root, port) {
       "Content-Type": TYPES[extname(file)] ?? "application/octet-stream",
       "Accept-Ranges": "bytes",
       "Cache-Control": "no-store",
-      // kopie obchodů se otevírají i přes 127.0.0.1 (některé skripty se na „localhost“ přepnou do vývojového režimu)
+      // shop copies are also opened via 127.0.0.1 (some scripts switch to dev mode on "localhost")
       "Access-Control-Allow-Origin": "*",
     };
     const m = /bytes=(\d*)-(\d*)/.exec(req.headers.range ?? "");
@@ -65,9 +65,9 @@ function staticServer(root, port) {
   }).listen(port, () => console.log(`http://localhost:${port}/`));
 }
 
-// Skripty některých obchodů skládají cesty od location.host (brainmarket.cz: /projects/.../detail.min.css),
-// <base> na ně nepomůže. Co v dev/ není a přišlo ze stránky /_real/<doména>/, stáhneme z originálu,
-// stejně jako to bude dělat proxy ukázky.
+// Some shops' scripts build paths from location.host (brainmarket.cz: /projects/.../detail.min.css),
+// <base> doesn't help with those. Whatever isn't in dev/ and came from a /_real/<domain>/ page, we fetch from the origin,
+// just like the demo proxy will.
 function proxyToShop(req, res, root) {
   const ref = req.headers.referer ? new URL(req.headers.referer) : null;
   const domain = ref && /^\/_real\/([^/]+)\//.exec(ref.pathname)?.[1];

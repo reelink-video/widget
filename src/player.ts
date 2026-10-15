@@ -16,8 +16,8 @@ type Opts = {
 const PLAY = "M8 5l11 7-11 7z";
 const PAUSE = "M8 5h3v14H8zM13 5h3v14h-3z";
 
-// Přehrávač na celou obrazovku. Šipky vlevo/vpravo a ťuknutí listují videa (na konci kolekce pokračuje další),
-// šipky nahoru/dolů a swipe přepínají kolekce. Samostatné video je kolekce s jedním klipem: bez proužků nahoře.
+// Fullscreen player. Left/right arrows and taps page through videos (at the end of a collection the next one continues),
+// up/down arrows and swipe switch collections. A standalone video is a single-clip collection: no bars on top.
 export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: Opts) {
   const cols = data.collections;
   const C = cols.length;
@@ -33,7 +33,7 @@ export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: 
 
   const backdrop = h("img", { class: "p-backdrop", alt: "", "aria-hidden": "true" });
   const row = h("div", { class: "p-row" });
-  // <dialog> přes showModal() jde do top layer: žádný plovoucí prvek obchodu (chat, štítky) nebude nad přehrávačem
+  // <dialog> via showModal() goes to the top layer: no floating shop element (chat, badges) will be above the player
   const dialog = h("dialog", { class: "player", tabindex: -1, "aria-label": "Přehrávač videí" }, backdrop, row);
   shadow.append(dialog);
   dialog.addEventListener("cancel", (e) => {
@@ -42,7 +42,7 @@ export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: 
   });
   dialog.addEventListener("click", (e) => (e.target === dialog || e.target === row) && close());
 
-  // fokus vrátíme na dlaždici uvnitř Shadow DOM widgetu, ne jen na jeho hostitele
+  // return focus to the tile inside the widget's Shadow DOM, not just to its host
   let lastFocus = document.activeElement as HTMLElement | null;
   while (lastFocus?.shadowRoot?.activeElement) lastFocus = lastFocus.shadowRoot.activeElement as HTMLElement;
   const prevOverflow = document.documentElement.style.overflow;
@@ -77,7 +77,7 @@ export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: 
     );
   }
 
-  // podtitulek: u kolekce počet videí, u samostatného videa délka (když ji známe)
+  // subtitle: video count for a collection, duration for a standalone video (when known)
   const sub = (k: Collection) => (isSingle(k) ? (k.clips[0].duration ? fmtTime(k.clips[0].duration) : "") : `${k.clips.length} ${videaWord(k.clips.length)}`);
 
   function draw() {
