@@ -38,7 +38,7 @@ function visiblePrice() {
 
 // Availability, shipping and benefits ("Doprava zdarma", "Vrácení do 30 dnů") are part of the purchase decision,
 // the widget must not separate them from the button: it goes after them, but still before the description and tabs.
-const BUY_INFO = /availability|delivery|shipping|benefit|doprava|doruc|gift|darek|perk|usp|dkLabFav|social-buttons|link-icons/i;
+const BUY_INFO = /availability|delivery|shipping|benefit|doprava|doruc|gift|darek|perk|usp|dkLabFav|social-buttons|link-icons|more-info/i;
 const COLUMN = ".p-info-wrapper, #product-detail-form";
 
 // The sibling directly below the element on the page. By position, not DOM order: templates
@@ -83,6 +83,20 @@ function buyBlock(start: Element) {
 
 const isBuyInfo = (e: Element) => BUY_INFO.test(String(e.className)) || isNote(e);
 
+// A row of inline buttons below the cart (goldbee.cz: "Tabulka velikostí", "Hlídat produkt", "Vaše fotorecenze"):
+// the widget goes after the whole row in DOM order. By position it would split the row, the buttons would re-wrap
+// around it and the next pass would pick another spot.
+const inline = (e: Element) => getComputedStyle(e).display.startsWith("inline");
+function pastInlineRow(at: Element) {
+  if (!inline(at)) return at;
+  for (let n = at.nextElementSibling; n; n = n.nextElementSibling) {
+    if (n.matches("[data-reelink-widget]")) continue;
+    if (!inline(n)) break;
+    at = n;
+  }
+  return at;
+}
+
 function afterBuyInfo(start: Element) {
   let at = buyBlock(start);
   for (;;) {
@@ -90,7 +104,7 @@ function afterBuyInfo(start: Element) {
     while (!nextEl(at) && at.parentElement && !at.parentElement.matches(COLUMN) && at.parentElement !== document.body) at = at.parentElement;
     const next = nextEl(at);
     if (next && isBuyInfo(next)) at = next;
-    else return at;
+    else return pastInlineRow(at);
   }
 }
 

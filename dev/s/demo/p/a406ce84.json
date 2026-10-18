@@ -3,9 +3,9 @@
   "format": "tiles",
   "badge": true,
   "collections": [
-    { "id": "v-1", "title": "Na postavě", "clips": [ { "src": "/media/moda-1.mp4", "poster": "/media/moda-1.jpg", "label": "Na postavě" } ] },
-    { "id": "v-2", "title": "Detail látky", "clips": [ { "src": "/media/moda-2.mp4", "poster": "/media/moda-2.jpg", "label": "Detail látky" } ] },
-    { "id": "v-3", "title": "Venku", "clips": [ { "src": "/media/moda-3.mp4", "poster": "/media/moda-3.jpg", "label": "Venku" } ] },
-    { "id": "v-4", "title": "S doplňky", "clips": [ { "src": "/media/moda-4.mp4", "poster": "/media/moda-4.jpg", "label": "S doplňky" } ] }
+    { "id": "v-1", "title": "Na postavě", "clips": [ { "src": "/media/moda-1.mp4", "preview": "/media/moda-1-p.mp4", "duration": 17, "poster": "/media/moda-1.jpg", "label": "Na postavě" } ] },
+    { "id": "v-2", "title": "Detail látky", "clips": [ { "src": "/media/moda-2.mp4", "preview": "/media/moda-2-p.mp4", "duration": 16, "poster": "/media/moda-2.jpg", "label": "Detail látky" } ] },
+    { "id": "v-3", "title": "Venku", "clips": [ { "src": "/media/moda-3.mp4", "preview": "/media/moda-3-p.mp4", "duration": 14, "poster": "/media/moda-3.jpg", "label": "Venku" } ] },
+    { "id": "v-4", "title": "S doplňky", "clips": [ { "src": "/media/moda-4.mp4", "preview": "/media/moda-4-p.mp4", "duration": 10, "poster": "/media/moda-4.jpg", "label": "S doplňky" } ] }
   ]
 }

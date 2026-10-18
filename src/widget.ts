@@ -4,18 +4,19 @@ import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "./util";
 import { track } from "./events";
 
 // duration: for a standalone video we show it instead of "1 video"
-function durationSlot(c: Collection, video?: HTMLVideoElement) {
+// (from the data; the tile only plays the short preview, so its metadata doesn't know the length)
+function durationSlot(c: Collection) {
   const el = h("small");
   const known = c.clips.reduce((s, v) => s + (v.duration ?? NaN), 0);
   if (Number.isFinite(known)) el.textContent = isSingle(c) ? fmtTime(known) : `${c.clips.length} ${videaWord(c.clips.length)} · ${fmtTime(known)}`;
   else if (!isSingle(c)) el.textContent = `${c.clips.length} ${videaWord(c.clips.length)}`;
-  else if (video) video.addEventListener("loadedmetadata", () => (el.textContent = fmtTime(video.duration)), { once: true });
   return el;
 }
 
+// tiles loop the short preview, never the full clip: that one loads only in the player
 function preview(c: Collection) {
   const v = c.clips[0];
-  return h("video", { muted: true, playsInline: true, loop: true, preload: "none", poster: v.poster, src: v.src, style: `object-position:${objPos(v)}` });
+  return h("video", { muted: true, playsInline: true, loop: true, preload: "none", poster: v.poster, src: v.preview, style: `object-position:${objPos(v)}` });
 }
 
 function tile(c: Collection, open: () => void) {
@@ -28,7 +29,7 @@ function tile(c: Collection, open: () => void) {
     { class: "rl-tile", type: "button", "aria-label": label, onclick: open },
     video,
     k > 1 && h("span", { class: "segs", "aria-hidden": "true" }, ...c.clips.map(() => h("i"))),
-    h("span", { class: "lbl" }, name, durationSlot(c, video)),
+    h("span", { class: "lbl" }, name, durationSlot(c)),
   );
 }
 
@@ -60,7 +61,7 @@ function feature(cols: Collection[], open: (i: number) => void) {
   const c = cols[0];
   const video = preview(c);
   const rest = cols.slice(1);
-  const meta = durationSlot(c, video);
+  const meta = durationSlot(c);
   meta.className = "rl-feature-meta";
   return h(
     "button",
@@ -85,7 +86,7 @@ function feature(cols: Collection[], open: (i: number) => void) {
 
 // previews autoplay when visible (and the visitor doesn't prefer reduced motion)
 function autoplay(root: ParentNode) {
-  const vids = Array.from(root.querySelectorAll<HTMLVideoElement>("video"));
+  const vids = Array.from(root.querySelectorAll<HTMLVideoElement>("video[src]"));
   if (prefersReducedMotion() || !("IntersectionObserver" in window)) return () => {};
   const io = new IntersectionObserver(
     (es) =>

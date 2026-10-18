@@ -55,7 +55,7 @@ async function boot() {
   data.collections = data.collections.filter((c) => c.clips.length > 0);
   // video paths are relative to the JSON, not to the shop page (it may have its own <base>)
   const abs = (u: string) => new URL(u, new URL(url, location.href)).href;
-  for (const c of data.collections) for (const v of c.clips) [v.src, v.poster] = [abs(v.src), abs(v.poster)];
+  for (const c of data.collections) for (const v of c.clips) [v.src, v.poster, v.preview] = [abs(v.src), abs(v.poster), v.preview && abs(v.preview)];
   const forced = script.dataset.format as Format | undefined;
   if (forced && FORMATS.includes(forced)) data.format = forced;
   if (!FORMATS.includes(data.format)) data.format = "tiles";
@@ -68,7 +68,8 @@ async function boot() {
     return;
   }
 
-  const host = h("div", { class: "reelink", "data-reelink-widget": "" });
+  // inline, because shop CSS beats :host (goldbee.cz floats every div in .p-detail-info)
+  const host = h("div", { class: "reelink", "data-reelink-widget": "", style: "float:none;clear:both" });
   place(host, adapter);
   applyTheme(host, readTheme(host, adapter.findCta()));
   const shadow = host.attachShadow({ mode: "open" });
@@ -165,14 +166,22 @@ function put(host: HTMLElement, { el, mode }: Pos) {
 // where it belongs; window width changes (phone rotation) we watch always.
 function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void) {
   let timer = 0;
+  // where the widget was before its last move: coming back there means the widget itself flips the layout
+  // (goldbee.cz: inline buttons re-wrap around it), so it stays put until the window width changes
+  let back: [Element | null, Element | null] | null = null;
+  let frozen = false;
   // not requestAnimationFrame: it doesn't run in a background tab (product opened in a new tab)
   const schedule = (delay = 30) => {
+    if (frozen) return;
     clearTimeout(timer);
     timer = window.setTimeout(() => {
       const before = host.parentElement;
       const prev = host.previousElementSibling;
       place(host, adapter);
-      if (host.parentElement !== before || host.previousElementSibling !== prev) onMove();
+      if (host.parentElement === before && host.previousElementSibling === prev) return;
+      frozen = !!back && back[0] === host.parentElement && back[1] === host.previousElementSibling;
+      back = [before, prev];
+      onMove();
     }, delay);
   };
   const stops: (() => void)[] = [];
@@ -192,6 +201,8 @@ function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void)
   window.addEventListener("resize", () => {
     if (innerWidth === width) return;
     width = innerWidth;
+    frozen = false;
+    back = null;
     schedule(150);
   });
 }

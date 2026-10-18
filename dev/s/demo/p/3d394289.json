@@ -5,19 +5,19 @@
   "badge": true,
   "collections": [
     { "id": "textura", "title": "Textura", "clips": [
-      { "src": "/media/kosm-2.mp4", "poster": "/media/kosm-2.jpg", "pos": "45%", "label": "Textura" },
-      { "src": "/media/kosm-3.mp4", "poster": "/media/kosm-3.jpg", "pos": "40%", "label": "Na ruce" }
+      { "src": "/media/kosm-2.mp4", "preview": "/media/kosm-2-p.mp4", "duration": 6, "poster": "/media/kosm-2.jpg", "pos": "45%", "label": "Textura" },
+      { "src": "/media/kosm-3.mp4", "preview": "/media/kosm-3-p.mp4", "duration": 30, "poster": "/media/kosm-3.jpg", "pos": "40%", "label": "Na ruce" }
     ] },
     { "id": "rutina", "title": "Večerní rutina", "clips": [
-      { "src": "/media/kosm-4.mp4", "poster": "/media/kosm-4.jpg", "pos": "40%", "label": "1. Odlíčení" },
-      { "src": "/media/kosm-6.mp4", "poster": "/media/kosm-6.jpg", "pos": "35%", "label": "2. Noční krém" },
-      { "src": "/media/kosm-5.mp4", "poster": "/media/kosm-5.jpg", "pos": "50%", "label": "3. Polštářky pod oči" }
+      { "src": "/media/kosm-4.mp4", "preview": "/media/kosm-4-p.mp4", "duration": 11, "poster": "/media/kosm-4.jpg", "pos": "40%", "label": "1. Odlíčení" },
+      { "src": "/media/kosm-6.mp4", "preview": "/media/kosm-6-p.mp4", "duration": 24, "poster": "/media/kosm-6.jpg", "pos": "35%", "label": "2. Noční krém" },
+      { "src": "/media/kosm-5.mp4", "preview": "/media/kosm-5-p.mp4", "duration": 15, "poster": "/media/kosm-5.jpg", "pos": "50%", "label": "3. Polštářky pod oči" }
     ] },
     { "id": "v-1", "title": "Jílová maska", "clips": [
-      { "src": "/media/kosm-8.mp4", "poster": "/media/kosm-8.jpg", "pos": "40%", "label": "Jílová maska" }
+      { "src": "/media/kosm-8.mp4", "preview": "/media/kosm-8-p.mp4", "duration": 14, "poster": "/media/kosm-8.jpg", "pos": "40%", "label": "Jílová maska" }
     ] },
     { "id": "v-2", "title": "Balzám na rty", "clips": [
-      { "src": "/media/kosm-1.mp4", "poster": "/media/kosm-1.jpg", "pos": "50%", "label": "Balzám na rty" }
+      { "src": "/media/kosm-1.mp4", "preview": "/media/kosm-1-p.mp4", "duration": 15, "poster": "/media/kosm-1.jpg", "pos": "50%", "label": "Balzám na rty" }
     ] }
   ]
 }

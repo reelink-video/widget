@@ -4,6 +4,9 @@
 export type Clip = {
   src: string;
   poster: string;
+  // short silent loop for the tile (a few seconds, ~100 kB); without it the tile shows only the poster
+  // and the full video loads in the player
+  preview?: string;
   // horizontal crop of the video in the preview, e.g. "40%"
   pos?: string;
   label?: string;
