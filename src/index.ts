@@ -8,7 +8,7 @@
 //   data-format  overrides the format from admin: tiles | circles | single
 //   data-events  URL for analytics events, defaults to the Reelink API (none with data-src: demos and debugging)
 
-import type { Format, PlatformAdapter, ProductData } from "./types";
+import type { Format, PlatformAdapter, ProductData, ShopConfig } from "./types";
 import { shoptet } from "./adapters/shoptet";
 import { generic } from "./adapters/generic";
 import { widgetCss } from "./styles";
@@ -23,7 +23,7 @@ const EVENTS = "https://api.reelink.cz/api/e";
 const FORMATS: Format[] = ["tiles", "circles", "single"];
 
 type Info = { product: ReturnType<PlatformAdapter["getProduct"]>; spot: string; after: string; line: boolean };
-type Api = { setFormat(f: Format): void; adapter: string; key: string; info(): Info };
+type Api = { setFormat(f: Format): void; setTitle(t: string | undefined): void; adapter: string; key: string; info(): Info };
 declare global {
   interface Window {
     reelink?: Api | { loaded: true };
@@ -49,10 +49,14 @@ async function boot() {
   setEventContext({ endpoint: script.dataset.events ?? (script.dataset.src ? null : EVENTS), shop, product: key });
 
   const url = script.dataset.src ?? `${base}/s/${encodeURIComponent(shop)}/p/${key}.json`;
-  const res = await fetch(url, { credentials: "omit" });
-  if (!res.ok) return; // product without videos: the widget doesn't show at all
-  const data: unknown = await res.json();
-  if (!valid(data)) return;
+  // shop settings in parallel with the product, so they add no wait; none (never saved, or a demo) = defaults
+  const config = script.dataset.src ? null : fetchJson<ShopConfig>(`${base}/s/${encodeURIComponent(shop)}/config.json`);
+  const data = await fetchJson<unknown>(url);
+  if (!valid(data)) return; // product without videos: the widget doesn't show at all
+  const cfg = await config;
+  if (cfg?.format) data.format = cfg.format;
+  if (typeof cfg?.title === "string") data.title = cfg.title;
+  if (typeof cfg?.badge === "boolean") data.badge = cfg.badge;
   data.collections = data.collections.filter((c) => c.clips.length > 0);
   // video paths are relative to the JSON, not to the shop page (it may have its own <base>)
   const abs = (u: string) => new URL(u, new URL(url, location.href)).href;
@@ -106,6 +110,7 @@ async function boot() {
     adapter: adapter.name,
     key,
     setFormat: (f) => FORMATS.includes(f) && view.setFormat(f),
+    setTitle: (t) => view.setTitle(t),
     // for debugging and the test overview: what the widget learned about the page and where it placed itself
     info: () => ({
       product: adapter.getProduct(),
@@ -114,6 +119,15 @@ async function boot() {
       line: !host.hasAttribute("data-noline"),
     }),
   };
+}
+
+async function fetchJson<T>(url: string): Promise<T | null> {
+  try {
+    const res = await fetch(url, { credentials: "omit" });
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
 }
 
 // inserts the widget at the anchor; returns false when the anchor isn't on the page

@@ -28,11 +28,21 @@ export type Format = "tiles" | "circles" | "single";
 export type ProductData = {
   v: 1;
   format: Format;
+  // product page URL (the admin preview opens it through the demo proxy)
+  url?: string;
   // block heading above the videos; empty string = no heading
   title?: string;
   // "videa přes reelink" badge in the player (Start yes, Pro no)
   badge?: boolean;
   collections: Collection[];
+};
+
+// shop settings from „Vzhled“: <base>/s/<shop>/config.json; they override the product JSON
+export type ShopConfig = {
+  v: 1;
+  format?: Format;
+  title?: string;
+  badge?: boolean;
 };
 
 // what we know about the product from the page: so the price in the player always matches the site

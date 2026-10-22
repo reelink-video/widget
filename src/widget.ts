@@ -108,6 +108,8 @@ function autoplay(root: ParentNode) {
 
 export type WidgetView = {
   setFormat(f: Format): void;
+  // undefined = default heading, "" = none
+  setTitle(t: string | undefined): void;
   pause(on: boolean): void;
 };
 
@@ -157,6 +159,11 @@ export function renderWidget(shadow: ShadowRoot, data: ProductData, onOpen: (col
     setFormat(f) {
       if (f === format) return;
       format = f;
+      draw();
+    },
+    setTitle(t) {
+      if (t === data.title) return;
+      data.title = t;
       draw();
     },
     pause(on) {
