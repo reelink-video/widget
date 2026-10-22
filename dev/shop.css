@@ -1,4 +1,4 @@
-/* hrubá napodobenina šablony Shoptet, jen kvůli vývoji widgetu */
+/* rough imitation of a Shoptet template, only for widget development */
 html { font-size: 62.5%; }
 body { margin: 0; font: 1.5rem/1.5 Georgia, "Times New Roman", serif; color: #2b2622; background: #faf7f2; }
 .dev-bar { position: sticky; top: 0; z-index: 10; display: flex; gap: 8px; align-items: center; padding: 8px 16px; background: #111; color: #fff; font: 13px system-ui, sans-serif; }

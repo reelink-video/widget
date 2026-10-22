@@ -30,9 +30,9 @@ function prepare(html, origin) {
 async function snapshot(domain) {
   const home = await get(`https://${domain.replace(/^https?:\/\//, "")}`);
   const origin = new URL(home.url).origin;
-  if (!home.html.includes("cdn.myshoptet.com")) return { domain, error: "není Shoptet" };
+  if (!home.html.includes("cdn.myshoptet.com")) return { domain, error: "not Shoptet" };
   const productUrl = firstProduct(home.html, home.url);
-  if (!productUrl) return { domain, error: "na úvodní stránce není produkt" };
+  if (!productUrl) return { domain, error: "no product on the homepage" };
   const page = await get(productUrl);
   const template = /template-(\d+)/.exec(page.html)?.[1] ?? "?";
   const dir = new URL(`${domain}/`, OUT);
@@ -44,13 +44,13 @@ async function snapshot(domain) {
 
 const domains = process.argv.slice(2);
 if (!domains.length) {
-  console.log("použití: node scripts/snapshot.mjs domena.cz [domena2.cz ...]");
+  console.log("usage: node scripts/snapshot.mjs domain.cz [domain2.cz ...]");
   process.exit(1);
 }
 for (const d of domains) {
   try {
     const r = await snapshot(d);
-    console.log(r.error ? `✗ ${d}: ${r.error}` : `✓ ${d}  šablona ${r.template}  ${r.url}`);
+    console.log(r.error ? `✗ ${d}: ${r.error}` : `✓ ${d}  template ${r.template}  ${r.url}`);
   } catch (e) {
     console.log(`✗ ${d}: ${e.message}`);
   }
