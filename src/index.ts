@@ -6,7 +6,7 @@
 //   data-base    where to fetch data from, defaults to the URL the script was loaded from
 //   data-src     direct URL of the videos JSON (proxy demo, debugging)
 //   data-format  overrides the format from admin: tiles | circles | single
-//   data-events  URL for analytics events (none yet)
+//   data-events  URL for analytics events, defaults to the Reelink API (none with data-src: demos and debugging)
 
 import type { Format, PlatformAdapter, ProductData } from "./types";
 import { shoptet } from "./adapters/shoptet";
@@ -19,6 +19,7 @@ import { openPlayer } from "./player";
 import { setEventContext, track } from "./events";
 
 const ADAPTERS: PlatformAdapter[] = [shoptet, generic];
+const EVENTS = "https://api.reelink.cz/api/e";
 const FORMATS: Format[] = ["tiles", "circles", "single"];
 
 type Info = { product: ReturnType<PlatformAdapter["getProduct"]>; spot: string; after: string; line: boolean };
@@ -45,7 +46,7 @@ async function boot() {
   const adapter = ADAPTERS.find((a) => a.detect() && a.isProductPage());
   if (!adapter) return;
   const key = productKey();
-  setEventContext({ endpoint: script.dataset.events ?? null, shop, product: key });
+  setEventContext({ endpoint: script.dataset.events ?? (script.dataset.src ? null : EVENTS), shop, product: key });
 
   const url = script.dataset.src ?? `${base}/s/${encodeURIComponent(shop)}/p/${key}.json`;
   const res = await fetch(url, { credentials: "omit" });

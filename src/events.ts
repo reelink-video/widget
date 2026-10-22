@@ -1,5 +1,6 @@
 // Analytics events. Without consent only aggregates: we send no visitor ID or cookies.
-// No endpoint yet; every event also goes out as a window event "reelink:event" (debugging, demo on the site).
+// Every event goes out as a window event "reelink:event" (debugging, demo on the site); to the endpoint for now
+// only the impression, which starts the shop's trial on its first view.
 
 export type EventName =
   | "impression"
@@ -21,7 +22,7 @@ export function track(name: EventName, data: Record<string, string | number> = {
   const detail = { e: name, shop: ctx.shop, product: ctx.product, ...data, t: Date.now() };
   try {
     window.dispatchEvent(new CustomEvent("reelink:event", { detail }));
-    if (ctx.endpoint && navigator.sendBeacon) navigator.sendBeacon(ctx.endpoint, JSON.stringify(detail));
+    if (ctx.endpoint && name === "impression" && navigator.sendBeacon) navigator.sendBeacon(ctx.endpoint, JSON.stringify(detail));
   } catch {
     // analytics must never break the shop page
   }
