@@ -2,6 +2,8 @@
 // The key is a hash of the product's canonical URL path (see productKey), so the backend can compute it from the feed URL too.
 
 export type Clip = {
+  // video id in the admin, sent with events for the statistics
+  id?: string;
   src: string;
   poster: string;
   // short silent loop for the tile (a few seconds, ~100 kB); without it the tile shows only the poster

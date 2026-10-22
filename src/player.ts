@@ -116,7 +116,7 @@ export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: 
         const key = `${col.id}:${i}:${m}`;
         if (pct >= m - (m === 100 ? 1.5 : 0) && !reported.has(key)) {
           reported.add(key);
-          track(`progress_${m}` as EventName, { collection: col.id, clip: i });
+          track(`progress_${m}` as EventName, { collection: col.id, clip: i, video: v.id });
         }
       }
     });
@@ -181,7 +181,7 @@ export function openPlayer({ data, product, start, themeFrom, onCta, onClose }: 
       h("button", {
         type: "button",
         onclick: () => {
-          track("cta_click", { collection: cols[c].id, variant: product.needsVariant ? "choose" : "cart" });
+          track("cta_click", { collection: cols[c].id, video: cols[c].clips[i].id, variant: product.needsVariant ? "choose" : "cart" });
           close();
           onCta();
         },

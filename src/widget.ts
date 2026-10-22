@@ -120,7 +120,7 @@ export function renderWidget(shadow: ShadowRoot, data: ProductData, onOpen: (col
   let stop = () => {};
 
   const open = (i: number) => {
-    track("open", { collection: cols[i].id });
+    track("open", { collection: cols[i].id, video: cols[i].clips[0].id });
     onOpen(i);
   };
 

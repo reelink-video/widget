@@ -1,6 +1,6 @@
 // Analytics events. Without consent only aggregates: we send no visitor ID or cookies.
-// Every event goes out as a window event "reelink:event" (debugging, demo on the site); to the endpoint for now
-// only the impression, which starts the shop's trial on its first view.
+// Every event goes out as a window event "reelink:event" (debugging, demo on the site); to the endpoint only
+// the ones the shop's statistics show (the first impression also starts the trial).
 
 export type EventName =
   | "impression"
@@ -16,13 +16,15 @@ export type EventName =
 type Ctx = { endpoint: string | null; shop: string; product: string };
 let ctx: Ctx = { endpoint: null, shop: "", product: "" };
 
+const SENT: EventName[] = ["impression", "open", "progress_100", "cta_click"];
+
 export const setEventContext = (c: Ctx) => (ctx = c);
 
-export function track(name: EventName, data: Record<string, string | number> = {}) {
+export function track(name: EventName, data: Record<string, string | number | undefined> = {}) {
   const detail = { e: name, shop: ctx.shop, product: ctx.product, ...data, t: Date.now() };
   try {
     window.dispatchEvent(new CustomEvent("reelink:event", { detail }));
-    if (ctx.endpoint && name === "impression" && navigator.sendBeacon) navigator.sendBeacon(ctx.endpoint, JSON.stringify(detail));
+    if (ctx.endpoint && SENT.includes(name) && navigator.sendBeacon) navigator.sendBeacon(ctx.endpoint, JSON.stringify(detail));
   } catch {
     // analytics must never break the shop page
   }
