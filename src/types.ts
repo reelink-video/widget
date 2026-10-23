@@ -44,6 +44,8 @@ export type ShopConfig = {
   title?: string;
   badge?: boolean;
   placement?: Placement;
+  // trial over without an order or the subscription ended: show nothing
+  off?: boolean;
 };
 
 // Where the shop put the widget in „Vzhled“: a rule, not pixels. anchor = CSS selector of a stable element on the

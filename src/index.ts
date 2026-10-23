@@ -64,6 +64,7 @@ async function boot() {
   const data = await fetchJson<unknown>(url);
   if (!valid(data)) return; // product without videos: the widget doesn't show at all
   const cfg = await config;
+  if (cfg?.off) return;
   if (cfg?.format) data.format = cfg.format;
   if (typeof cfg?.title === "string") data.title = cfg.title;
   if (typeof cfg?.badge === "boolean") data.badge = cfg.badge;

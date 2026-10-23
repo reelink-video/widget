@@ -77,7 +77,7 @@ function feature(cols: Collection[], open: (i: number) => void) {
           "span",
           { class: "rl-feature-more" },
           h("span", { class: "stack", "aria-hidden": "true" }, ...rest.slice(0, 3).map((x) => h("img", { src: x.clips[0].poster, alt: "", loading: "lazy", style: `object-position:${objPos(x.clips[0])}` }))),
-          `Dále: ${rest.map((x) => clipTitle(x)).join(", ")}`,
+          `Další: ${rest.map((x) => clipTitle(x)).join(", ")}`,
         ),
     ),
     icon("M9 5l7 7-7 7", "rl-feature-go"),
