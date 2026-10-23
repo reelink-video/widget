@@ -43,7 +43,14 @@ export type ShopConfig = {
   format?: Format;
   title?: string;
   badge?: boolean;
+  placement?: Placement;
 };
+
+// Where the shop put the widget in „Vzhled“: a rule, not pixels. anchor = CSS selector of a stable element on the
+// product page (data-testid, template classes), the widget goes before/after it or to its start.
+export type Rule = { anchor: string; where: "before" | "after" | "prepend"; wide?: boolean; label?: string };
+// separately for desktop and phones (narrower than PHONE_MAX); missing or null = the adapter decides
+export type Placement = { desktop?: Rule | null; mobile?: Rule | null };
 
 // what we know about the product from the page: so the price in the player always matches the site
 export type PageProduct = {
@@ -67,6 +74,8 @@ export type Theme = {
   radius: string;
 };
 
+export type Anchor = { el: Element; where: "before" | "after" | "prepend"; wide?: boolean };
+
 export interface PlatformAdapter {
   name: string;
   detect(): boolean;
@@ -74,7 +83,7 @@ export interface PlatformAdapter {
   getProduct(): PageProduct | null;
   // where to insert the widget: returns the element and whether to go before or after it; wide = full page width.
   // host is the already rendered widget (its height tells whether it fits in the column)
-  findAnchor(host?: HTMLElement): { el: Element; where: "before" | "after"; wide?: boolean } | null;
+  findAnchor(host?: HTMLElement): Anchor | null;
   // element whose look the widget adopts (button colors and border radius)
   findCta(): HTMLElement | null;
   // option A: close the video and show the native variant picker; option B: click the native button

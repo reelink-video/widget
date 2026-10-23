@@ -8,7 +8,7 @@
 //   data-format  overrides the format from admin: tiles | circles | single
 //   data-events  URL for analytics events, defaults to the Reelink API (none with data-src: demos and debugging)
 
-import type { Format, PlatformAdapter, ProductData, ShopConfig } from "./types";
+import type { Anchor, Format, Placement, PlatformAdapter, ProductData, ShopConfig } from "./types";
 import { shoptet } from "./adapters/shoptet";
 import { generic } from "./adapters/generic";
 import { widgetCss } from "./styles";
@@ -21,9 +21,19 @@ import { setEventContext, track } from "./events";
 const ADAPTERS: PlatformAdapter[] = [shoptet, generic];
 const EVENTS = "https://api.reelink.cz/api/e";
 const FORMATS: Format[] = ["tiles", "circles", "single"];
+// narrower windows use the phone rule of the placement (the admin previews phones at 390 px, desktops at 1280 px)
+const PHONE_MAX = 767;
 
 type Info = { product: ReturnType<PlatformAdapter["getProduct"]>; spot: string; after: string; line: boolean };
-type Api = { setFormat(f: Format): void; setTitle(t: string | undefined): void; adapter: string; key: string; info(): Info };
+type Api = {
+  setFormat(f: Format): void;
+  setTitle(t: string | undefined): void;
+  // admin preview: try a placement without saving; true = the widget sits where the rule says
+  setPlacement(p: Placement | null): boolean;
+  adapter: string;
+  key: string;
+  info(): Info;
+};
 declare global {
   interface Window {
     reelink?: Api | { loaded: true };
@@ -65,7 +75,8 @@ async function boot() {
   if (forced && FORMATS.includes(forced)) data.format = forced;
   if (!FORMATS.includes(data.format)) data.format = "tiles";
 
-  const anchor = adapter.findAnchor();
+  const spot = new Spots(adapter, cfg?.placement ?? null);
+  const anchor = spot.findAnchor();
   const product = adapter.getProduct();
   if (!anchor || !product) {
     // the shop template changed: admin shows it as a broken installation
@@ -75,7 +86,7 @@ async function boot() {
 
   // inline, because shop CSS beats :host (goldbee.cz floats every div in .p-detail-info)
   const host = h("div", { class: "reelink", "data-reelink-widget": "", style: "float:none;clear:both" });
-  place(host, adapter);
+  place(host, spot);
   applyTheme(host, readTheme(host, adapter.findCta()));
   const shadow = host.attachShadow({ mode: "open" });
   shadow.append(h("style", {}, widgetCss));
@@ -99,18 +110,26 @@ async function boot() {
   });
 
   // only now does the widget have a height: the adapter decides whether it stays in the column or goes full width
-  place(host, adapter);
-  // the browser stops a moved element along with its preview videos, restart them
-  settle(host, adapter, () => {
+  place(host, spot);
+  const restart = () => {
     view.pause(true);
     view.pause(false);
-  });
+  };
+  // the browser stops a moved element along with its preview videos, restart them
+  settle(host, spot, restart);
 
   window.reelink = {
     adapter: adapter.name,
     key,
     setFormat: (f) => FORMATS.includes(f) && view.setFormat(f),
     setTitle: (t) => view.setTitle(t),
+    setPlacement: (p) => {
+      spot.placement = p;
+      const before = host.previousElementSibling;
+      place(host, spot);
+      if (host.previousElementSibling !== before) restart();
+      return spot.ruled(host) !== null;
+    },
     // for debugging and the test overview: what the widget learned about the page and where it placed itself
     info: () => ({
       product: adapter.getProduct(),
@@ -130,18 +149,48 @@ async function fetchJson<T>(url: string): Promise<T | null> {
   }
 }
 
+// The spot the shop picked in „Vzhled“ wins; when its element isn't on the page (another template, a different kind
+// of product), the adapter finds the spot itself and the admin hears about it once through anchor_missing.
+class Spots {
+  private told = false;
+  constructor(
+    private adapter: PlatformAdapter,
+    public placement: Placement | null,
+  ) {}
+
+  ruled(host?: HTMLElement): Anchor | null {
+    const phone = innerWidth <= PHONE_MAX;
+    const rule = phone ? this.placement?.mobile : this.placement?.desktop;
+    if (!rule) return null;
+    let el: Element | null = null;
+    try {
+      el = document.querySelector(rule.anchor);
+    } catch {
+      // an invalid selector behaves like a missing element
+    }
+    if (el && !(host && host.contains(el)) && !el.closest("[data-reelink-widget]")) return { el, where: rule.where, wide: !phone && rule.wide }; // one column on phones: never the wide look
+    if (!this.told) track("anchor_missing", { adapter: this.adapter.name, rule: 1 });
+    this.told = true;
+    return null;
+  }
+
+  findAnchor(host?: HTMLElement) {
+    return this.ruled(host) ?? this.adapter.findAnchor(host);
+  }
+}
+
 // inserts the widget at the anchor; returns false when the anchor isn't on the page
-function place(host: HTMLElement, adapter: PlatformAdapter) {
-  const anchor = adapter.findAnchor(host);
+function place(host: HTMLElement, spot: Spots) {
+  const anchor = spot.findAnchor(host);
   if (!anchor) return false;
   if (host.hasAttribute("data-wide") !== !!anchor.wide) host.toggleAttribute("data-wide", !!anchor.wide);
   const at = anchor.el;
-  const pos = gridSafe(at, anchor.where);
+  const pos: Pos = anchor.where === "prepend" ? { el: at, mode: "prepend" } : gridSafe(at, anchor.where);
   if (!isAt(host, pos)) put(host, pos);
   // templates lay out the column with flex and CSS order: without the same order the widget would jump to the top
   const order = pos.mode === "after" || pos.mode === "before" ? getComputedStyle(at).order : "";
   if (host.style.order !== order) host.style.order = order;
-  const lined = endsWithLine(anchor.where === "after" ? at : at.previousElementSibling, host.getBoundingClientRect().width);
+  const lined = endsWithLine(anchor.where === "after" ? at : host.previousElementSibling, host.getBoundingClientRect().width);
   if (host.hasAttribute("data-noline") !== lined) host.toggleAttribute("data-noline", lined);
   return true;
 }
@@ -179,7 +228,7 @@ function put(host: HTMLElement, { el, mode }: Pos) {
 // Template and add-on scripts often rearrange the cart block only after page load, and the gallery
 // gets its height only with the photos. So for the first 10 s we watch the DOM and page size and move the widget
 // where it belongs; window width changes (phone rotation) we watch always.
-function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void) {
+function settle(host: HTMLElement, spot: Spots, onMove: () => void) {
   let timer = 0;
   // where the widget was before its last move: coming back there means the widget itself flips the layout
   // (goldbee.cz: inline buttons re-wrap around it), so it stays put until the window width changes
@@ -192,7 +241,7 @@ function settle(host: HTMLElement, adapter: PlatformAdapter, onMove: () => void)
     timer = window.setTimeout(() => {
       const before = host.parentElement;
       const prev = host.previousElementSibling;
-      place(host, adapter);
+      place(host, spot);
       if (host.parentElement === before && host.previousElementSibling === prev) return;
       frozen = !!back && back[0] === host.parentElement && back[1] === host.previousElementSibling;
       back = [before, prev];
