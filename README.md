@@ -63,12 +63,43 @@ file if even a single byte changes:
 
 The exact line with the hash is in every release.
 
+## How it works
+
+1. The script finds out what kind of page it is on. On Shoptet it recognises the product page itself; on any other
+   site it looks for `<div data-reelink></div>` placed by the shop.
+2. It loads two static JSON files from the CDN: the videos for this product (the key is a hash of the page URL) and
+   the shop's settings. No videos for the product means the widget doesn't appear at all.
+3. It picks a spot on the page (the one chosen in the admin, or below the add-to-cart block), renders the videos
+   inside Shadow DOM and adopts the shop's font and button colors.
+4. A click opens a fullscreen player. Its button presses the shop's own "Add to cart" button, or scrolls to the
+   variant picker when a size or color has to be chosen first.
+
+## Code
+
+```
+src/
+  index.ts           entry point: script attributes, start-up, window.reelink for the admin preview
+  data.ts            loading the product's videos and the shop's settings
+  product-key.ts     product key from the page URL
+  placement.ts       where the widget goes, and keeping it there while the page settles
+  layout.ts          geometry helpers (what sits beside what, lines between blocks)
+  theme.ts           font and colors taken from the shop
+  events.ts          aggregate statistics events
+  format.ts          Czech plurals, durations, titles
+  dom.ts             tiny element helpers
+  types.ts           data shapes and the platform adapter interface
+  adapters/
+    shoptet.ts       Shoptet product pages
+    generic.ts       any site with <div data-reelink>
+  widget/            the block on the product page and its styles
+  player/            the fullscreen player and its styles
+```
+
 ## Development
 
 ```sh
 npm ci
-npm run dev     # http://localhost:4400
-npm run check
+npm run check   # types
 npm run build   # dist/widget.js
 ```
 

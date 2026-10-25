@@ -1,9 +1,10 @@
 import type { PageProduct, PlatformAdapter } from "../types";
 import { text } from "../dom";
-import { blockAnchor, sideBySide } from "../util";
+import { blockAnchor, sideBySide } from "../layout";
 
-// Shoptet: all templates use the same product form (#product-detail-form) and data-testid,
-// verified on levanduloveudoli.cz and erikafashion.cz (template 11)
+// Shoptet: all templates use the same product form (#product-detail-form) and data-testid attributes.
+// Everything else (column layout, where the price and benefits sit) differs per template and per add-on,
+// so the spot is found from what is actually on screen.
 const form = () => document.getElementById("product-detail-form");
 
 // variants to choose: a select or radio parameter with more than one option
@@ -23,7 +24,7 @@ function visiblePrice() {
   const clean = (t: string) => t.replace(/\s+/g, " ").trim().replace(/\s*\/\s*[^\d\s/]+\.?$/, "");
   const el = visible(".price-final-holder") ?? visible(".price-final");
   if (el) return clean(el.innerText);
-  // the template hid Shoptet's price and shows its own (fermato.cz): take the hidden one's text, else microdata
+  // the template hid Shoptet's price and shows its own (some custom templates): take the hidden one's text, else microdata
   const hidden = scope.querySelector(".price-final-holder, .price-final");
   if (hidden?.textContent?.trim()) return clean(hidden.textContent);
   const amount = document.querySelector<HTMLMetaElement>('#product-detail-form [itemprop="price"]')?.content;
@@ -42,7 +43,7 @@ const BUY_INFO = /availability|delivery|shipping|benefit|doprava|doruc|gift|dare
 const COLUMN = ".p-info-wrapper, #product-detail-form";
 
 // The sibling directly below the element on the page. By position, not DOM order: templates
-// rearrange the column with the CSS order property (fermato.cz has the price note at the very end of the DOM).
+// rearrange the column with the CSS order property (the price note may be the last element in the DOM).
 // We skip our widget and invisible elements.
 function nextEl(e: Element) {
   const me = e.getBoundingClientRect();
@@ -69,7 +70,7 @@ function isNote(e: Element) {
   return t.length > 0 && t.length <= 120 && e.getBoundingClientRect().height <= 48;
 }
 
-// The purchase block is often its own card (coffeespot.cz: section.cart-box, brainmarket.cz: .detail-buy),
+// The purchase block is often its own card (section.cart-box, .detail-buy),
 // the widget doesn't belong in it. From the anchor we go up to the highest wrapper that doesn't yet contain the product description.
 const DESCRIPTION = '.p-short-description, [data-testid="productCardShortDescr"], [data-testid="productCardDescr"], .p-detail-inner-header, h1';
 
@@ -83,7 +84,7 @@ function buyBlock(start: Element) {
 
 const isBuyInfo = (e: Element) => BUY_INFO.test(String(e.className)) || isNote(e);
 
-// A row of inline buttons below the cart (goldbee.cz: "Tabulka velikostí", "Hlídat produkt", "Vaše fotorecenze"):
+// A row of inline buttons below the cart ("Tabulka velikostí", "Hlídat produkt"):
 // the widget goes after the whole row in DOM order. By position it would split the row, the buttons would re-wrap
 // around it and the next pass would pick another spot.
 const inline = (e: Element) => getComputedStyle(e).display.startsWith("inline");

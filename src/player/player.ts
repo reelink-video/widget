@@ -1,8 +1,8 @@
-import type { Collection, PageProduct, ProductData } from "./types";
-import { h, icon } from "./dom";
-import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "./util";
+import type { Collection, PageProduct, ProductData } from "../types";
+import { h, icon } from "../dom";
+import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "../format";
 import { playerCss } from "./styles";
-import { track, type EventName } from "./events";
+import { track, type EventName } from "../events";
 
 type Opts = {
   data: ProductData;

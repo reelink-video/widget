@@ -1,7 +1,7 @@
 import type { PageProduct, PlatformAdapter } from "../types";
 import { text } from "../dom";
 
-// Any site: the widget goes into a <div data-reelink></div> that the shop places itself.
+// Any other site: the widget goes into a <div data-reelink></div> that the shop places itself.
 // Product data comes from schema.org (JSON-LD), the player button just scrolls the page to the purchase area.
 
 type LdProduct = { "@type"?: string | string[]; name?: string; image?: string | string[]; offers?: unknown; sku?: string };

@@ -1,7 +1,10 @@
-import type { Collection, Format, ProductData } from "./types";
-import { h, icon, prefersReducedMotion } from "./dom";
-import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "./util";
-import { track } from "./events";
+// The block on the product page: a heading and videos in one of three formats (tiles, circles, one featured video).
+// Clicking a video opens the player; the page decides what happens then (see index.ts).
+
+import type { Collection, Format, ProductData } from "../types";
+import { h, icon, prefersReducedMotion } from "../dom";
+import { clipTitle, fmtTime, isSingle, objPos, videaWord } from "../format";
+import { track } from "../events";
 
 // duration: for a standalone video we show it instead of "1 video"
 // (from the data; the tile only plays the short preview, so its metadata doesn't know the length)

@@ -1,3 +1,5 @@
+// DOM helpers. The widget has no runtime dependencies, so it builds elements by hand.
+
 type Attrs = Record<string, string | number | boolean | null | undefined | EventListener>;
 type Child = Node | string | null | undefined | false;
 
